@@ -6,6 +6,8 @@ require('dotenv').config();
 
 const questionnaireRoutes = require('./routes/questionnaireRoutes');
 const responseRoutes = require('./routes/responseRoutes');
+const formRoutes = require('./routes/formRoutes');
+const submissionRoutes = require('./routes/submissionRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,7 +21,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const publicPath = path.join(__dirname, '../public');
 app.use(express.static(publicPath));
 
-// API Routes
+// API Routes - New form system
+app.use('/api/forms', formRoutes);
+app.use('/api/submissions', submissionRoutes);
+
+// API Routes - Legacy questionnaire system (kept for compatibility)
 app.use('/api/questionnaires', questionnaireRoutes);
 app.use('/api/responses', responseRoutes);
 

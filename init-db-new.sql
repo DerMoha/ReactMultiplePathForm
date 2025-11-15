@@ -1,5 +1,4 @@
--- Database initialization script for Dynamic Form Builder
--- This script is automatically run when MariaDB container starts
+-- New database schema for dynamic conditional forms
 
 -- Forms table
 CREATE TABLE IF NOT EXISTS forms (
@@ -108,7 +107,7 @@ INSERT INTO options (question_id, text, value, order_index) VALUES
 (1, 'Bacon', 'bacon', 1),
 (1, 'Toast', 'toast', 2);
 
--- Conditional logic: Show egg question if eggs selected, show bacon question if bacon selected
+-- Conditional logic: Show egg question if eggs selected
 INSERT INTO conditions (question_id, depends_on_option_id, condition_type) VALUES
 (2, 1, 'show_if_selected'),
 (3, 2, 'show_if_selected');

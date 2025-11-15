@@ -26,4 +26,22 @@ export const responseAPI = {
   deleteBySession: (sessionId) => api.delete(`/responses/session/${sessionId}`),
 };
 
+// New Form API (conditional forms)
+export const formAPI = {
+  getAll: () => api.get('/forms'),
+  getById: (id) => api.get(`/forms/${id}`),
+  create: (data) => api.post('/forms', data),
+  update: (id, data) => api.put(`/forms/${id}`, data),
+  delete: (id) => api.delete(`/forms/${id}`),
+  saveComplete: (form) => api.post('/forms/save-complete', { form }),
+};
+
+export const submissionAPI = {
+  create: (data) => api.post('/submissions', data),
+  getByFormId: (formId) => api.get(`/submissions/form/${formId}`),
+  getById: (id) => api.get(`/submissions/${id}`),
+  getBySessionId: (sessionId) => api.get(`/submissions/session/${sessionId}`),
+  delete: (id) => api.delete(`/submissions/${id}`),
+};
+
 export default api;
