@@ -52,17 +52,21 @@ CREATE TABLE IF NOT EXISTS options (
   INDEX idx_order (question_id, order_index)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Conditions table (for conditional logic)
+-- Conditions table (for conditional logic on questions)
 CREATE TABLE IF NOT EXISTS conditions (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  question_id INT NOT NULL,  -- The question to show/hide
+  question_id INT NULL,  -- The question to show/hide (NULL if section condition)
+  section_id INT NULL,  -- The section to show/hide (NULL if question condition)
   depends_on_option_id INT NOT NULL,  -- The option that must be selected
   condition_type ENUM('show_if_selected') DEFAULT 'show_if_selected',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE,
+  FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE,
   FOREIGN KEY (depends_on_option_id) REFERENCES options(id) ON DELETE CASCADE,
   INDEX idx_question_id (question_id),
-  INDEX idx_depends_on (depends_on_option_id)
+  INDEX idx_section_id (section_id),
+  INDEX idx_depends_on (depends_on_option_id),
+  CHECK ((question_id IS NOT NULL AND section_id IS NULL) OR (question_id IS NULL AND section_id IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Submissions table

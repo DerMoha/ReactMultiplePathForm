@@ -37,6 +37,41 @@ function FormViewer() {
     }));
   };
 
+  const isSectionVisible = (section) => {
+    // If no conditions, always visible
+    if (!section.conditions || section.conditions.length === 0) {
+      return true;
+    }
+
+    // Check if any condition is satisfied
+    return section.conditions.some(condition => {
+      const optionId = condition.depends_on_option_id;
+
+      // Find which question this option belongs to
+      let dependsOnQuestionId = null;
+      form.sections.forEach(s => {
+        s.questions.forEach(q => {
+          if (q.options && q.options.some(opt => (opt.id || opt.tempId) === optionId)) {
+            dependsOnQuestionId = q.id || q.tempId;
+          }
+        });
+      });
+
+      if (!dependsOnQuestionId) return false;
+
+      const answer = answers[dependsOnQuestionId];
+
+      // Check if the required option is selected
+      if (Array.isArray(answer)) {
+        // For checkboxes (array of selected values)
+        return answer.includes(optionId);
+      } else {
+        // For radio buttons (single value)
+        return answer === optionId;
+      }
+    });
+  };
+
   const isQuestionVisible = (question) => {
     // If no conditions, always visible
     if (!question.conditions || question.conditions.length === 0) {
@@ -235,6 +270,9 @@ function FormViewer() {
         {form.sections.map((section) => {
           const sectionId = section.id || section.tempId;
           const isCollapsed = collapsedSections[sectionId];
+
+          // Check if section is visible based on conditions
+          if (!isSectionVisible(section)) return null;
 
           // Check if section has any visible questions
           const visibleQuestions = section.questions.filter(q => isQuestionVisible(q));

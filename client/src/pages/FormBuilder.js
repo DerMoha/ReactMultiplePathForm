@@ -238,6 +238,129 @@ function FormBuilder() {
     setForm({ ...form, sections: newSections });
   };
 
+  // Move question up within section
+  const moveQuestionUp = (sectionIndex, questionIndex) => {
+    if (questionIndex === 0) return;
+
+    const newSections = [...form.sections];
+    const questions = newSections[sectionIndex].questions;
+
+    // Swap with previous question
+    [questions[questionIndex - 1], questions[questionIndex]] =
+      [questions[questionIndex], questions[questionIndex - 1]];
+
+    // Update order indices
+    questions.forEach((q, idx) => q.order_index = idx);
+
+    setForm({ ...form, sections: newSections });
+  };
+
+  // Move question down within section
+  const moveQuestionDown = (sectionIndex, questionIndex) => {
+    const newSections = [...form.sections];
+    const questions = newSections[sectionIndex].questions;
+
+    if (questionIndex >= questions.length - 1) return;
+
+    // Swap with next question
+    [questions[questionIndex], questions[questionIndex + 1]] =
+      [questions[questionIndex + 1], questions[questionIndex]];
+
+    // Update order indices
+    questions.forEach((q, idx) => q.order_index = idx);
+
+    setForm({ ...form, sections: newSections });
+  };
+
+  // Move question to different section
+  const moveQuestionToSection = (fromSectionIndex, questionIndex, toSectionIndex) => {
+    if (fromSectionIndex === toSectionIndex) return;
+
+    const newSections = [...form.sections];
+
+    // Remove from old section
+    const [question] = newSections[fromSectionIndex].questions.splice(questionIndex, 1);
+
+    // Update order indices in old section
+    newSections[fromSectionIndex].questions.forEach((q, idx) => q.order_index = idx);
+
+    // Add to new section
+    question.order_index = newSections[toSectionIndex].questions.length;
+    newSections[toSectionIndex].questions.push(question);
+
+    setForm({ ...form, sections: newSections });
+  };
+
+  // Move section up
+  const moveSectionUp = (sectionIndex) => {
+    if (sectionIndex === 0) return;
+
+    const newSections = [...form.sections];
+
+    // Swap with previous section
+    [newSections[sectionIndex - 1], newSections[sectionIndex]] =
+      [newSections[sectionIndex], newSections[sectionIndex - 1]];
+
+    // Update order indices
+    newSections.forEach((s, idx) => s.order_index = idx);
+
+    setForm({ ...form, sections: newSections });
+  };
+
+  // Move section down
+  const moveSectionDown = (sectionIndex) => {
+    const newSections = [...form.sections];
+
+    if (sectionIndex >= newSections.length - 1) return;
+
+    // Swap with next section
+    [newSections[sectionIndex], newSections[sectionIndex + 1]] =
+      [newSections[sectionIndex + 1], newSections[sectionIndex]];
+
+    // Update order indices
+    newSections.forEach((s, idx) => s.order_index = idx);
+
+    setForm({ ...form, sections: newSections });
+  };
+
+  // Add condition to section
+  const addSectionCondition = (sectionIndex) => {
+    const newSections = [...form.sections];
+    const section = newSections[sectionIndex];
+
+    if (!section.conditions) {
+      section.conditions = [];
+    }
+
+    section.conditions.push({
+      tempId: generateTempId(),
+      depends_on_option_id: '',
+      condition_type: 'show_if_selected'
+    });
+
+    setForm({ ...form, sections: newSections });
+  };
+
+  // Remove section condition
+  const removeSectionCondition = (sectionIndex, conditionIndex) => {
+    const newSections = [...form.sections];
+    const section = newSections[sectionIndex];
+
+    section.conditions = section.conditions.filter((_, idx) => idx !== conditionIndex);
+
+    setForm({ ...form, sections: newSections });
+  };
+
+  // Update section condition
+  const updateSectionCondition = (sectionIndex, conditionIndex, field, value) => {
+    const newSections = [...form.sections];
+    const condition = newSections[sectionIndex].conditions[conditionIndex];
+
+    condition[field] = value;
+
+    setForm({ ...form, sections: newSections });
+  };
+
   // Get all options from radio/checkbox questions to use in conditions
   const getAllOptions = () => {
     const options = [];
@@ -302,6 +425,24 @@ function FormBuilder() {
           {form.sections.map((section, sIdx) => (
             <div key={section.id || section.tempId} className="section-card">
               <div className="section-header">
+                <div className="section-move-buttons">
+                  <button
+                    onClick={() => moveSectionUp(sIdx)}
+                    disabled={sIdx === 0}
+                    className="btn-move"
+                    title="Move section up"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    onClick={() => moveSectionDown(sIdx)}
+                    disabled={sIdx === form.sections.length - 1}
+                    className="btn-move"
+                    title="Move section down"
+                  >
+                    ↓
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={section.title}
@@ -314,11 +455,59 @@ function FormBuilder() {
                 </button>
               </div>
 
+              {/* Section conditional logic */}
+              <div className="section-conditions">
+                <label>Show this section if:</label>
+                {(section.conditions || []).map((condition, cIdx) => (
+                  <div key={condition.id || condition.tempId} className="condition-row">
+                    <select
+                      value={condition.depends_on_option_id}
+                      onChange={(e) => updateSectionCondition(sIdx, cIdx, 'depends_on_option_id', e.target.value)}
+                    >
+                      <option value="">Select option...</option>
+                      {getAllOptions().map(opt => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <span>is selected</span>
+                    <button onClick={() => removeSectionCondition(sIdx, cIdx)} className="btn-danger-small">
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {getAllOptions().length > 0 && (
+                  <button onClick={() => addSectionCondition(sIdx)} className="btn-secondary-small">
+                    + Add Section Condition
+                  </button>
+                )}
+                {(!section.conditions || section.conditions.length === 0) && getAllOptions().length === 0 && (
+                  <p className="hint">Add radio/checkbox questions first to enable conditional sections</p>
+                )}
+              </div>
+
               {/* Questions in this section */}
               <div className="questions">
                 {section.questions.map((question, qIdx) => (
                   <div key={question.id || question.tempId} className="question-card">
                     <div className="question-header">
+                      <div className="question-move-buttons">
+                        <button
+                          onClick={() => moveQuestionUp(sIdx, qIdx)}
+                          disabled={qIdx === 0}
+                          className="btn-move-small"
+                          title="Move question up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() => moveQuestionDown(sIdx, qIdx)}
+                          disabled={qIdx === section.questions.length - 1}
+                          className="btn-move-small"
+                          title="Move question down"
+                        >
+                          ↓
+                        </button>
+                      </div>
                       <span className="question-number">Q{qIdx + 1}</span>
                       <select
                         value={question.type}
@@ -329,6 +518,26 @@ function FormBuilder() {
                         <option value="radio">Radio Buttons</option>
                         <option value="checkbox">Checkboxes</option>
                       </select>
+                      {form.sections.length > 1 && (
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              moveQuestionToSection(sIdx, qIdx, parseInt(e.target.value));
+                              e.target.value = '';
+                            }
+                          }}
+                          className="question-move-select"
+                          defaultValue=""
+                        >
+                          <option value="">Move to...</option>
+                          {form.sections.map((s, idx) => {
+                            if (idx !== sIdx) {
+                              return <option key={idx} value={idx}>{s.title}</option>;
+                            }
+                            return null;
+                          })}
+                        </select>
+                      )}
                       <button onClick={() => removeQuestion(sIdx, qIdx)} className="btn-danger-small">
                         Remove
                       </button>
