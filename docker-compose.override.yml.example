@@ -1,0 +1,24 @@
+# Example Docker Compose Override File
+# Use this to run the app without the included MariaDB
+
+# Copy this file to docker-compose.override.yml:
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#
+# Then edit docker-compose.override.yml and update with your external database settings
+
+version: '3.8'
+
+services:
+  app:
+    environment:
+      DB_HOST: your-external-db-host.com
+      DB_USER: your-db-user
+      DB_PASSWORD: your-db-password
+      DB_NAME: questionnaire_db
+      DB_PORT: 3306
+    # Remove dependency on mariadb service
+    depends_on: []
+
+# To completely disable MariaDB, run:
+#   docker-compose up -d app
+# This will only start the app service, not mariadb
